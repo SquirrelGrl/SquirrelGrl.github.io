@@ -1,0 +1,3 @@
+# SquirrelGrl.github.io
+Job searching is driving me nuts 🥥🌰🥜
+Time to build a website...
