@@ -1,3 +1,1 @@
 ## My Brain's a Tad... Squirrelly...🥥🌰🥜
-//<p> Job searching is driving me nuts 🥥🌰🥜</p>
-//Time to build a website...
