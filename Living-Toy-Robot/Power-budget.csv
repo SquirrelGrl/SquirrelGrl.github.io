@@ -1,0 +1,11 @@
+Load,Allowance mA,Supply path,Basis / status
+CPX MCU and factory support,50,USB -> regulator,Engineering allowance; includes board logic; not measured
+Ten onboard NeoPixels,38.3,Internal 3.3V,"10*(1mA+3*20mA*12/255), cap enforced in firmware"
+External LED branches,8.3,CPX 3.3V / GPIO,Conservative sum of all seven branches
+Door internal pull-up,0.2,CPX 3.3V,Conservative 3.63V/20k
+CPX subtotal excluding external speaker,96.8,USB,Sum; factory regulator allowance also includes conservative double counting
+External STEMMA speaker,200,CPX VOUT,Volume-limited allowance; must be measured on actual WAVs
+CPX USB branch total,296.8,USB VBUS,Bench acceptance <=350mA; factory fuse 500mA
+SG90 transient/stall allowance,1000,Direct +5V supply,Clone-dependent; verify actual motor current and supply droop
+Combined design allowance,1296.8,Regulated +5V,Conditional engineering budget; not a measured maximum
+Recommended regulated supply rating,3000,5.0V supply,Separate servo and CPX branches; shared ground

@@ -1,0 +1,18 @@
+PASS: Exported KiCad netlist matches all 21 expected nets, including seven separate LED resistor branches and two NC greens.
+PASS: BOM contains only approved modules, three RGB LEDs, seven resistors, door contact and supply lead; no added capacitor, transistor or driver.
+PASS: A0-A7 each have exactly the specified function; scene anode is on 3.3V; servo +5V is separate from VOUT.
+PASS: Mocked CircuitPython boot/door bounce/open/reclose: exactly drinking -> interrupted -> drinking WAV transitions, within debounce deadlines.
+PASS: During interruption: external scene red only, ten pixels red/purple, eye red; normal animation and drinking pose return after reclose.
+PASS: Servo pulses evolve without waiting for audio; nominal 40/110 degree endpoints and cleanup verified in simulation.
+PASS: All ten pixel slots used; every simulated channel remains <=12/255. No synthetic-tone fallback exists.
+PASS: Missing recordings fail visibly with audio stopped, lights off and servo pulses disabled.
+PASS: Unsupported stereo WAV fails visibly before playback; outputs return to quiet state.
+
+BOUNDARIES:
+Peripheral classes and filesystem WAV streams were mocked for behavior testing. These checks do not test actual audio samples, DMA service, RAM headroom, NeoPixel interrupt timing, or servo electrical behavior.
+No physical CPX, servo, LEDs, supply or PID 3885 was available. LED Vf assumptions, visible brightness, SG90 input threshold, loaded current, supply droop, temperature, audio quality and frame timing require commissioning measurements.
+User must provide both actual recorded WAV files. No audio assets are bundled or claimed to have been played on hardware.
+KiCad ERC report is separate and authoritative for schematic ERC only. There are no manually excluded violations.
+Manufacturer hardware source and official CircuitPython pin/timer/audio source were consulted. Full Microchip datasheet PDF was unavailable; see README reference limitations.
+
+SIMULATED MODE CHANGE TIMES (seconds): [(0.036000000000000025, '/audio/drinking.wav'), (0.35100000000000026, '/audio/interrupted.wav'), (0.8550000000000006, '/audio/drinking.wav')]

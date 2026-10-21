@@ -1,0 +1,31 @@
+Wire,From,To,Net,Purpose / assembly note
+W01,Regulated supply +5V (J1.1),CPX USB connector VBUS,+5V,Use existing USB power lead; NOT VOUT pad
+W02,Regulated supply GND (J1.2),CPX USB GND / CPX GND,GND,Common reference; USB cable provides board power return
+W03,Regulated supply +5V (J1.1),SG90 red lead (M1.2),+5V,Direct separate servo power branch
+W04,Regulated supply GND (J1.2),SG90 brown/black lead (M1.3),GND,Direct short servo return; do not pass through CPX
+W05,CPX A6,SG90 orange/yellow signal (M1.1),SERVO_PWM,50Hz 3.3V control; confirm actual SG90 accepts it
+W06,CPX A0,STEMMA SIG / white,AUDIO,Real DAC WAV signal
+W07,CPX VOUT,STEMMA POWER / red,VOUT,Adjust existing pot and verify current budget
+W08,CPX GND,STEMMA GND / black,GND,Common audio/power ground
+W09,CPX A1,R1 pin 2,EYE_RED,Eye 1 red branch; 2.2k
+W10,R1 pin 1,Eye 1 red anode D1.1,D1_RA,Only eye 1 red element behind this resistor
+W11,CPX A1,R3 pin 2,EYE_RED,Eye 2 red branch; separate 2.2k
+W12,R3 pin 1,Eye 2 red anode D2.1,D2_RA,Parallel color branch; no shared resistor
+W13,CPX A2,R2 pin 2,EYE_BLUE,Eye 1 blue branch; 2.2k
+W14,R2 pin 1,Eye 1 blue anode D1.4,D1_BA,Only eye 1 blue element behind this resistor
+W15,CPX A2,R4 pin 2,EYE_BLUE,Eye 2 blue branch; separate 2.2k
+W16,R4 pin 1,Eye 2 blue anode D2.4,D2_BA,Parallel color branch; no shared resistor
+W17,Eye 1 common cathode D1.2,CPX GND,GND,Identify actual common-cathode lead
+W18,Eye 2 common cathode D2.2,CPX GND,GND,Identify actual common-cathode lead
+NC1,Eye 1 green anode D1.3,NO CONNECTION,NC,Damaged green lead; insulate individually
+NC2,Eye 2 green anode D2.3,NO CONNECTION,NC,Damaged green lead; insulate individually
+W19,CPX 3.3V pad,Scene common anode D3.2,+3V3,3.3V ONLY; never VOUT or +5V
+W20,Scene red cathode D3.1,R5 pin 2,D3_RK,1k series resistor for red only
+W21,R5 pin 1,CPX A3,SCENE_RED_N,LOW turns red ON
+W22,Scene green cathode D3.3,R6 pin 2,D3_GK,1k series resistor for green only
+W23,R6 pin 1,CPX A4,SCENE_GREEN_N,LOW turns green ON
+W24,Scene blue cathode D3.4,R7 pin 2,D3_BK,1k series resistor for blue only
+W25,R7 pin 1,CPX A5,SCENE_BLUE_N,LOW turns blue ON
+W26,CPX A7,Door contact copper tape electrode 1 (SW1.1),DOOR_N,Internal pull-up in software
+W27,Door contact electrode 2 (SW1.2),CPX GND,GND,Door shut must join both electrodes; no voltage supply at switch
+INT1,CPX factory D8 / PB23,All ten onboard NeoPixels,FACTORY INTERNAL,Already wired on CPX; no extra parts or wires
