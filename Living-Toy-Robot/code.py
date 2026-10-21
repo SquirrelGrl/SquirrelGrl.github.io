@@ -1,6 +1,6 @@
-"""Halloween minifridge robot, CPX, revision B.
+"""Halloween minifridge robot, CPX, revision C.
 
-User-approved change: three parallel scene RGB LEDs supply interruption red; no separate red LEDs.
+User-approved change: two parallel scene RGB LEDs supply interruption red; no separate red LEDs.
 Copy recorded PCM WAVs to /audio/drinking.wav and /audio/interrupted.wav.
 No tones or synthesized-audio fallback. See README for setup and power checks.
 """

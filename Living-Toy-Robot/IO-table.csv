@@ -2,9 +2,9 @@ CPX pad / internal signal,MCU pin,Function,Mode,Active level,Load / resource,Not
 A0,PA02,Recorded WAV audio to STEMMA SIG,Analog DAC,Analog,High impedance audio input; DAC + DMA + available TC,CPX onboard speaker amplifier disabled
 A1,PA05,Both eye red elements,PWM output 1000Hz,HIGH,1.182mA nominal / 1.943mA conservative maximum; TCC0 channel 1,Two separate 2.2k branches
 A2,PA06,Both eye blue elements,PWM output 1000Hz,HIGH,0.455mA nominal / 1.177mA conservative maximum; TCC1 channel 0,Two separate 2.2k branches
-A3,PA07,All three scene red elements,Digital output,LOW,1.182mA nominal / 1.943mA conservative maximum sink,Three separate 3.3k branches; steady red in interrupted mode
-A4 / SCL,PB03,All three scene green elements,Digital output,LOW,0.545mA nominal / 1.560mA conservative maximum sink,Three separate 3.3k branches; external I2C unavailable
-A5 / SDA,PB02,All three scene blue elements,Digital output,LOW,0.455mA nominal / 1.177mA conservative maximum sink,Three separate 3.3k branches; external I2C unavailable
+A3,PA07,Both scene red elements,Digital output,LOW,1.182mA nominal / 1.943mA conservative maximum sink,Two separate 2.2k branches; steady red in interrupted mode
+A4 / SCL,PB03,Both scene green elements,Digital output,LOW,0.545mA nominal / 1.560mA conservative maximum sink,Two separate 2.2k branches; external I2C unavailable
+A5 / SDA,PB02,Both scene blue elements,Digital output,LOW,0.455mA nominal / 1.177mA conservative maximum sink,Two separate 2.2k branches; external I2C unavailable
 A6 / RX,PB09,SG90 control,PWM output 50Hz,Positive pulses,High impedance servo input; TC4 channel 1,Servo motor powered separately; external UART unavailable
 A7 / TX,PB08,Door copper contact,Digital input + internal pull-up,LOW = closed door,<=0.182mA pull-up current,35ms software debounce; open wire = interrupted
 NEOPIXEL / D8 (internal),PB23,All 10 factory NeoPixels,Internal serial data,Addressable RGB,No external GPIO pad or wiring; raw channel cap 12/255,Ten LEDs explicitly retained

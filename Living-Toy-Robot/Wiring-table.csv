@@ -20,26 +20,19 @@ W18,Eye 2 common cathode D2.2,CPX GND,GND,Identify actual common-cathode lead
 NC1,Eye 1 green anode D1.3,NO CONNECTION,NC,Damaged green lead; insulate individually
 NC2,Eye 2 green anode D2.3,NO CONNECTION,NC,Damaged green lead; insulate individually
 W19,CPX 3.3V pad,Scene common anode D3.2,+3V3,3.3V ONLY; never VOUT or +5V
-W20,Scene red cathode D3.1,R5 pin 2,D3_RK,3.3k series resistor for red only
+W20,Scene red cathode D3.1,R5 pin 2,D3_RK,2.2k series resistor for red only
 W21,R5 pin 1,CPX A3,SCENE_RED_N,LOW turns red ON
-W22,Scene green cathode D3.3,R6 pin 2,D3_GK,3.3k series resistor for green only
+W22,Scene green cathode D3.3,R6 pin 2,D3_GK,2.2k series resistor for green only
 W23,R6 pin 1,CPX A4,SCENE_GREEN_N,LOW turns green ON
-W24,Scene blue cathode D3.4,R7 pin 2,D3_BK,3.3k series resistor for blue only
+W24,Scene blue cathode D3.4,R7 pin 2,D3_BK,2.2k series resistor for blue only
 W25,R7 pin 1,CPX A5,SCENE_BLUE_N,LOW turns blue ON
 W26,CPX A7,Door contact copper tape electrode 1 (SW1.1),DOOR_N,Internal pull-up in software
 W27,Door contact electrode 2 (SW1.2),CPX GND,GND,Door shut must join both electrodes; no voltage supply at switch
 INT1,CPX factory D8 / PB23,All ten onboard NeoPixels,FACTORY INTERNAL,Already wired on CPX; no extra parts or wires
 S2A,CPX 3.3V pad,D4 common anode pin 2,+3V3,Common anode; never +5V
-S2reda,D4 red cathode pin 1,R8 pin 2,D4_RED_K,Separate 3.3k resistor for this element
+S2reda,D4 red cathode pin 1,R8 pin 2,D4_RED_K,Separate 2.2k resistor for this element
 S2redb,R8 pin 1,CPX A3,SCENE_RED_N,Parallel branches share this color GPIO
-S2greena,D4 green cathode pin 3,R9 pin 2,D4_GREEN_K,Separate 3.3k resistor for this element
+S2greena,D4 green cathode pin 3,R9 pin 2,D4_GREEN_K,Separate 2.2k resistor for this element
 S2greenb,R9 pin 1,CPX A4,SCENE_GREEN_N,Parallel branches share this color GPIO
-S2bluea,D4 blue cathode pin 4,R10 pin 2,D4_BLUE_K,Separate 3.3k resistor for this element
+S2bluea,D4 blue cathode pin 4,R10 pin 2,D4_BLUE_K,Separate 2.2k resistor for this element
 S2blueb,R10 pin 1,CPX A5,SCENE_BLUE_N,Parallel branches share this color GPIO
-S3A,CPX 3.3V pad,D5 common anode pin 2,+3V3,Common anode; never +5V
-S3reda,D5 red cathode pin 1,R11 pin 2,D5_RED_K,Separate 3.3k resistor for this element
-S3redb,R11 pin 1,CPX A3,SCENE_RED_N,Parallel branches share this color GPIO
-S3greena,D5 green cathode pin 3,R12 pin 2,D5_GREEN_K,Separate 3.3k resistor for this element
-S3greenb,R12 pin 1,CPX A4,SCENE_GREEN_N,Parallel branches share this color GPIO
-S3bluea,D5 blue cathode pin 4,R13 pin 2,D5_BLUE_K,Separate 3.3k resistor for this element
-S3blueb,R13 pin 1,CPX A5,SCENE_BLUE_N,Parallel branches share this color GPIO

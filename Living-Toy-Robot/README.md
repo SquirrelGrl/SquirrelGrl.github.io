@@ -1,10 +1,10 @@
 # Living Toy Robot — Halloween Minifridge
 
-Revision B · October 21, 2026
+Revision C · October 21, 2026
 
-This design uses an **unmodified Adafruit Circuit Playground Express (CPX)**, two common-cathode RGB eye LEDs, **three** common-anode RGB scene LEDs, the existing Adafruit STEMMA Speaker PID 3885, an SG90, and a copper-tape door contact. It uses all ten factory NeoPixels. No external MOSFET, switching transistor, driver IC, expansion board, or capacitor is added.
+This design uses an **unmodified Adafruit Circuit Playground Express (CPX)**, two common-cathode RGB eye LEDs, **two** common-anode RGB scene LEDs, the existing Adafruit STEMMA Speaker PID 3885, an SG90, and a copper-tape door contact. It uses all ten factory NeoPixels. No external MOSFET, switching transistor, driver IC, expansion board, or capacitor is added.
 
-**Approved requirement change:** the user requested removal of the separate red interruption LEDs and use of the scene RGB lighting for red on command. Accordingly, the separate interruption group has quantity **zero**, and D3–D5 supply steady red during interruption. This change reduces the external signal requirement from nine to eight. No slide-switch solder tap or CPX modification is used.
+**Approved requirement change:** the user requested removal of the separate red interruption LEDs and use of the scene RGB lighting for red on command. Accordingly, the separate interruption group has quantity **zero**, and D3–D4 supply steady red during interruption. This change reduces the external signal requirement from nine to eight. No slide-switch solder tap or CPX modification is used.
 
 ## Files
 
@@ -38,19 +38,19 @@ Before the user revision, CPX's eight accessible pads could not accommodate all 
 
 Scene effects use the seven nonblack combinations of the three channels. These are colorful timed rave changes, not continuously variable external scene fades. Eyes have true hardware PWM fades; the ten onboard pixels supply smooth rainbow, chase, and pulse animation. A4/PB03 and A5/PB02 are not assigned `PWMOut`; A7/PB08 is the input. This avoids assuming that every exposed CPX pad supports CircuitPython PWM.
 
-## 2. GPIO and LED current verification — three scene LEDs
+## 2. GPIO and LED current verification — two scene LEDs
 
-**D3, D4 and D5 operate together.** Their red cathode branches share A3; green branches share A4; blue branches share A5. This uses three GPIO signals total, irrespective of LED count. Each element has its own resistor: no resistor is shared between LEDs. All three common anodes connect to CPX **3.3 V**, never 5 V or VOUT.
+**D3 and D4 operate together.** Their red cathode branches share A3; green branches share A4; blue branches share A5. This uses three GPIO signals total, irrespective of LED count. Each element has its own resistor: no resistor is shared between LEDs. Both common anodes connect to CPX **3.3 V**, never 5 V or VOUT.
 
 | Branches | References | Value | Quantity | Nominal current per element at 3.3 V |
 |---|---|---:|---:|---:|
 | Two eye red elements | R1, R3 | 2.2 kΩ | 2 | 0.591 mA, Vf = 2.0 V |
 | Two eye blue elements | R2, R4 | 2.2 kΩ | 2 | 0.227 mA, Vf = 2.8 V |
-| Three scene red elements | R5, R8, R11 | 3.3 kΩ | 3 | 0.394 mA, Vf = 2.0 V |
-| Three scene green elements | R6, R9, R12 | 3.3 kΩ | 3 | 0.182 mA, Vf = 2.7 V |
-| Three scene blue elements | R7, R10, R13 | 3.3 kΩ | 3 | 0.152 mA, Vf = 2.8 V |
+| Two scene red elements | R5, R8 | 2.2 kΩ | 2 | 0.591 mA, Vf = 2.0 V |
+| Two scene green elements | R6, R9 | 2.2 kΩ | 2 | 0.273 mA, Vf = 2.7 V |
+| Two scene blue elements | R7, R10 | 2.2 kΩ | 2 | 0.227 mA, Vf = 2.8 V |
 
-Resistor total: **four 2.2 kΩ and nine 3.3 kΩ**, all 5% tolerance or better and at least 1/8 W. Replace revision A's three 1 kΩ scene resistors: simply adding more LEDs with the old values would exceed the conservative GPIO loading targets.
+Resistor total: **ten 2.2 kΩ resistors** (four for the eyes and six for the scene LEDs), all 5% tolerance or better and at least 1/8 W. Revision C removes D5 and R11–R13 and changes scene resistors R5–R10 from 3.3 kΩ to 2.2 kΩ. Each remaining scene element receives **50% more nominal current** than in revision B, with the same combined GPIO current. Actual perceived brightness depends on the LED and surroundings; it is not guaranteed to rise by exactly 50%.
 
 `I = max(0, (Vrail − Vf − GPIO drop) / R)`. Nominal maximum external LED current is **3.818 mA** with all elements on. This neglects GPIO voltage drop; actual current and brightness will generally be lower. The exact LED part numbers are unknown. The conservative check below assumes Vrail = 3.63 V, resistor minimum = 95% of nominal, and minimum Vf = 1.6 V red, 2.0 V green, 2.4 V blue. These are design assumptions, not measured characteristics.
 
@@ -58,30 +58,28 @@ Resistor total: **four 2.2 kΩ and nine 3.3 kΩ**, all 5% tolerance or better an
 |---|---:|---:|---:|
 | A1 — two eye red branches | 1.182 mA source | 1.943 mA source | Below 2 mA source |
 | A2 — two eye blue branches | 0.455 mA source | 1.177 mA source | Below 2 mA source |
-| A3 — three scene red branches | 1.182 mA sink | 1.943 mA sink | Below 2.5 mA sink |
-| A4 — three scene green branches | 0.545 mA sink | 1.560 mA sink | Below 2.5 mA sink |
-| A5 — three scene blue branches | 0.455 mA sink | 1.177 mA sink | Below 2.5 mA sink |
-| All external LEDs | 3.818 mA | **7.799 mA** | Sum of all thirteen elements |
+| A3 — two scene red branches | 1.182 mA sink | 1.943 mA sink | Below 2.5 mA sink |
+| A4 — two scene green branches | 0.545 mA sink | 1.560 mA sink | Below 2.5 mA sink |
+| A5 — two scene blue branches | 0.455 mA sink | 1.177 mA sink | Below 2.5 mA sink |
+| All external LEDs | 3.818 mA | **7.799 mA** | Sum of all ten elements |
 
-Worst-case red scene calculation: `3 × (3.63 − 1.6) / (3300 × 0.95) = 1.943 mA` on A3. Total worst-case external sourcing is 3.120 mA; sinking is 4.679 mA. These remain far below the SAMD21 I/O-cluster ceilings of **46 mA source / 65 mA sink**, even pessimistically assigning all source current to one cluster and all sink current to one cluster. Reserve a further 5 mA for onboard logic/pull-ups. Door pull-up is at most about 0.182 mA under the assumptions used previously.
+Worst-case red scene calculation: `2 × (3.63 − 1.6) / (2200 × 0.95) = 1.943 mA` on A3. Total worst-case external sourcing is 3.120 mA; sinking is 4.679 mA. These remain far below the SAMD21 I/O-cluster ceilings of **46 mA source / 65 mA sink**, even pessimistically assigning all source current to one cluster and all sink current to one cluster. Reserve a further 5 mA for onboard logic/pull-ups. Door pull-up is at most about 0.182 mA under the assumptions used previously.
 
 The commonly advertised 7 mA GPIO recommendation / 10 mA maximum are not operating targets here. Adafruit's SAMD21 pinout documentation gives **130 mA absolute maximum for the package**. A deliberately conservative 50 mA allowance for MCU plus factory support circuitry, all 7.799 mA external LED current, and 5 mA logic margin totals **62.8 mA**, below that ceiling. NeoPixel supply current flows through the regulator rail, not its data GPIO; servo and speaker motor/amplifier power do not flow through GPIO.
 
-The largest calculated resistor dissipation is an eye red resistor at approximately **1.972 mW**; scene red resistors dissipate about **1.314 mW each**, well below 125 mW. The actual LED parts must satisfy the stated minimum-Vf assumptions. Three LEDs spread light over more locations but do not provide three times the former total light output: current per element is intentionally reduced. High-Vf green/blue parts may be dim at 3.3 V. Check appearance with the actual parts; do not lower resistors or move anodes to 5 V without redesigning the current limits.
+The largest calculated resistor dissipation is an eye red resistor at approximately **1.972 mW**; scene red resistors dissipate about **1.972 mW each**, well below 125 mW. The actual LED parts must satisfy the stated minimum-Vf assumptions. Two scene LEDs provide more current per element than revision B’s three-LED arrangement, while retaining the same combined current budget. High-Vf green/blue parts may be dim at 3.3 V. Check appearance with the actual parts; do not lower resistors or move anodes to 5 V without redesigning the current limits.
 
 ## 3. Series versus parallel wiring
 
 Each active LED element and its own resistor form a **series branch**. Matching-color branches are connected **in parallel** at their shared GPIO.
 
 * Eyes: A1 splits through R1 and R3 to the two red anodes; A2 splits through R2 and R4 to the two blue anodes. Both common cathodes go to GND. Green leads remain unconnected and individually insulated.
-* Scene red: D3 red cathode → R5 → A3; D4 red cathode → R8 → A3; D5 red cathode → R11 → A3.
-* Scene green: D3 green cathode → R6 → A4; D4 green cathode → R9 → A4; D5 green cathode → R12 → A4.
-* Scene blue: D3 blue cathode → R7 → A5; D4 blue cathode → R10 → A5; D5 blue cathode → R13 → A5.
-* D3, D4, D5 common anodes all connect to CPX 3.3 V. GPIO LOW turns that color on across all three packages; HIGH turns it off. The three packages show the same color together.
+* Scene red: D3 red cathode → R5 → A3; D4 red cathode → R8 → A3.
+* Scene green: D3 green cathode → R6 → A4; D4 green cathode → R9 → A4.
+* Scene blue: D3 blue cathode → R7 → A5; D4 blue cathode → R10 → A5.
+* D3 and D4 common anodes all connect to CPX 3.3 V. GPIO LOW turns that color on across both packages; HIGH turns it off. The two packages show the same color together.
 
-Do not place the three LEDs in series, and do not put bare parallel elements behind one shared resistor. RGB physical lead order varies: the schematic uses logical R/common/G/B pin numbers; identify the actual leads using their datasheets or a diode test.
-
-If only **two** scene LEDs are desired, omit D5 and R11–R13, leaving all other wiring and resistor values unchanged. Do not jumper the omitted resistors. No code change is needed. The delivered schematic and current budget cover all three.
+Do not place the two LEDs in series, and do not put bare parallel elements behind one shared resistor. RGB physical lead order varies: the schematic uses logical R/common/G/B pin numbers; identify the actual leads using their datasheets or a diode test.
 
 ## 4. Power topology and budget
 
@@ -95,7 +93,7 @@ Connect CPX **VOUT → STEMMA POWER**, **A0 → SIG**, and **GND → GND**. VOUT
 | Load | Design allowance | Route |
 |---|---:|---|
 | CPX MCU and factory support circuitry | 50 mA | CPX USB / internal regulator |
-| Ten NeoPixels at firmware raw-channel cap 12 | 37.8 mA | CPX internal 3.3 V rail |
+| Ten NeoPixels at firmware raw-channel cap 12 | 38.3 mA | CPX internal 3.3 V rail |
 | External LED branches | 7.8 mA | CPX 3.3 V rail / GPIO |
 | Door pull-up | 0.2 mA | CPX 3.3 V rail |
 | **CPX, excluding external speaker** | **96.3 mA** | USB branch |
@@ -125,7 +123,7 @@ CPX has 2 MB nominal external flash, with firmware/filesystem overhead. At 32,00
 
 AudioOut uses the DAC, background DMA, and an available timer. Hardware eye PWM uses separate TCC0 and TCC1 channels; servo uses TC4. Constructing the servo before AudioOut prevents the audio allocator from claiming TC4. Digital scene outputs use no timer. NeoPixel writes for ten pixels take approximately 300 µs plus protocol overhead and occur at 25 Hz. These peripheral allocations support concurrency architecturally; hardware playback/dropout testing is still required. Flash I/O and garbage collection can introduce short delays, so this is responsive cooperative control, not a hard-real-time guarantee.
 
-Door closed: contact LOW, servo approaches 40°, eyes fade blue↔purple, all three scene LEDs cycle seven RGB combinations together, and all ten pixels run a rainbow/chase/pulse pattern while the drinking WAV loops. Door open: after 35 ms of stable input, current audio stops, the scary WAV loops, servo approaches 110°, eyes become red, all three scene LEDs become steady red, and pixels alternate red/purple at 2 Hz. Door closed again restores the drinking mode and **restarts the drinking recording from its beginning**, rather than resuming its previous sample offset. Animation and servo updates use monotonic deadlines without waiting for audio completion.
+Door closed: contact LOW, servo approaches 40°, eyes fade blue↔purple, all two scene LEDs cycle seven RGB combinations together, and all ten pixels run a rainbow/chase/pulse pattern while the drinking WAV loops. Door open: after 35 ms of stable input, current audio stops, the scary WAV loops, servo approaches 110°, eyes become red, all two scene LEDs become steady red, and pixels alternate red/purple at 2 Hz. Door closed again restores the drinking mode and **restarts the drinking recording from its beginning**, rather than resuming its previous sample offset. Animation and servo updates use monotonic deadlines without waiting for audio completion.
 
 The servo retains a hardware holding pulse at its target. Travel is about 70° under nominal pulse calibration; adjust the two angle constants with the horn unloaded, then fit the mechanism. Software ramps by at most 2° every 20 ms. At boot, interrupted mode is the safe logical default, with audio starting after the initial debounce interval. An open/broken door wire reads as interrupted.
 
