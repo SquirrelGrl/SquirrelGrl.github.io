@@ -7,6 +7,7 @@ No tones or synthesized-audio fallback. See README for setup and power checks.
 """
 import time
 import math
+import random
 import board
 import digitalio
 import pwmio
@@ -15,7 +16,8 @@ import audiocore
 import neopixel
 
 DEBOUNCE_S = 0.035
-FRAME_S = 0.04                    # 25 Hz NeoPixel/eye animation
+FRAME_S = 0.04                    # 25 Hz eye updates / pixel output
+PIXEL_FLASH_S = 0.20             # new random pixel colors five times per second
 SERVO_STEP_S = 0.02
 DRINK_ANGLE = 40.0
 VIEWER_ANGLE = 110.0              # approximately 70 degrees from drinking pose
@@ -62,19 +64,6 @@ def scene(r, g, b):
     scene_blue.value = not b
 
 
-def wheel(position):
-    """Rainbow at a fixed safe channel ceiling; no full-brightness buffer."""
-    position = int(position) % 768
-    section, phase = divmod(position, 256)
-    up = int(phase * PIXEL_CHANNEL_CAP / 255)
-    down = PIXEL_CHANNEL_CAP - up
-    if section == 0:
-        return (down, up, 0)
-    if section == 1:
-        return (0, down, up)
-    return (up, 0, down)
-
-
 audio = audioio.AudioOut(board.A0)
 recordings = []                   # references keep stream handles alive
 try:
@@ -117,6 +106,7 @@ current_angle = VIEWER_ANGLE
 target_angle = VIEWER_ANGLE
 set_angle(current_angle)
 next_frame = now
+next_pixel_flash = now
 next_servo = now
 mode_started = now
 palette = ((1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0),
@@ -147,6 +137,7 @@ try:
                     eye_blue.duty_cycle = 0
                     scene(True, False, False)
                 next_frame = now
+                next_pixel_flash = now
 
         # Start static at scratch completion without a programmed pause. Door
         # transitions run first, so closing during scratch cancels this handoff.
@@ -168,10 +159,8 @@ try:
                 eye_red.duty_cycle = 65535
                 eye_blue.duty_cycle = 0
                 scene(True, False, False)
-                # Alternate red/purple at 2 Hz; external scene stays solid red.
-                purple = int(elapsed * 4) % 2
-                pixels.fill((PIXEL_CHANNEL_CAP, 0,
-                             PIXEL_CHANNEL_CAP if purple else 0))
+                # All ten onboard pixels stay solid red while the door is open.
+                pixels.fill((PIXEL_CHANNEL_CAP, 0, 0))
             else:
                 fade = (math.sin(elapsed * math.pi / 2.0) + 1.0) / 2.0
                 eye_red.duty_cycle = int(fade * 65535)
@@ -179,12 +168,13 @@ try:
                 # Digital combinations retain independent R/G/B control without
                 # software PWM that could jitter during streaming WAV playback.
                 scene(*palette[int(elapsed / 0.16) % len(palette)])
-                chase = int(elapsed * 8) % 10
-                pulse = 0.35 + 0.65 * fade
-                for i in range(10):
-                    rgb = wheel(elapsed * 90 + i * 768 / 10)
-                    scale = pulse if i == chase else pulse * 0.35
-                    pixels[i] = tuple(int(channel * scale) for channel in rgb)
+                if now >= next_pixel_flash:
+                    next_pixel_flash = now + PIXEL_FLASH_S
+                    for i in range(10):
+                        # Independently choose one of seven nonblack RGB colors.
+                        # Preserve the existing raw-channel current-budget cap.
+                        rgb = palette[random.randrange(len(palette))]
+                        pixels[i] = tuple(channel * PIXEL_CHANNEL_CAP for channel in rgb)
             pixels.show()            # ten pixels: ~300us data transfer, 25 times/s
         # Audio DMA and hardware PWM run in the background. No long sleeps or
         # blocking wait for audio completion; door input is checked every pass.

@@ -4,7 +4,7 @@ PASS: Two scene branches per color share A3/A4/A5; computed combined worst-case 
 PASS: A0-A7 each have exactly the specified function; scene anode is on 3.3V; servo +5V is separate from VOUT.
 PASS: Mocked boot/door bounce/open: drinking loop stops; scratch plays once; static loop starts on scratch completion without a programmed delay; closing during static returns to drinking.
 PASS: Closing during scratch cancels the sequence, restarts drinking immediately after debounce, and never starts static later.
-PASS: During interruption: external scene red only, ten pixels red/purple, eye red; normal animation and drinking pose return after reclose.
+PASS: During interruption: external scene red only, all ten pixels solid red, eye red; independent random nonblack pixel colors resume at 0.20s intervals and drinking pose returns after reclose.
 PASS: Servo pulses evolve without waiting for audio; nominal 40/110 degree endpoints and cleanup verified in simulation.
 PASS: All ten pixel slots used; every simulated channel remains <=12/255. No synthetic-tone fallback exists.
 PASS: Missing recordings fail visibly with audio stopped, lights off and servo pulses disabled.

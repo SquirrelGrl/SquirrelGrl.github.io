@@ -36,7 +36,7 @@ The two eyes share a red command and a blue command. Red and blue brightness are
 
 Before the user revision, CPX's eight accessible pads could not accommodate all nine independent functions. Reducing the number of interruption LEDs alone would reduce current, not the signal count. A Pico W or Feather M4 Express has enough accessible signals for the original external groups, but neither retains ten CPX factory NeoPixels as a single-board replacement. Pico W also lacks a native DAC; its audio path would require a separately verified PWM-audio implementation. Feather M4 Express has DAC outputs and adequate GPIO, but does not provide the requested ten onboard pixels. Extra pins never authorize extra current per pin. After the approved revision, neither replacement nor a second MCU is necessary; the final controller is CPX.
 
-Scene effects use the seven nonblack combinations of the three channels. These are colorful timed rave changes, not continuously variable external scene fades. Eyes have true hardware PWM fades; the ten onboard pixels supply smooth rainbow, chase, and pulse animation. A4/PB03 and A5/PB02 are not assigned `PWMOut`; A7/PB08 is the input. This avoids assuming that every exposed CPX pad supports CircuitPython PWM.
+Scene effects use the seven nonblack combinations of the three channels. These are colorful timed rave changes, not continuously variable external scene fades. Eyes have true hardware PWM fades; the ten onboard pixels flash independently chosen random colors at five color changes per second while the door is closed. A4/PB03 and A5/PB02 are not assigned `PWMOut`; A7/PB08 is the input. This avoids assuming that every exposed CPX pad supports CircuitPython PWM.
 
 ## 2. GPIO and LED current verification — two scene LEDs
 
@@ -110,7 +110,7 @@ SG90 clones vary; 1 A is a planning allowance, not a guaranteed maximum. Measure
 
 ## 5. CircuitPython and actual recorded audio
 
-Install the current stable **CircuitPython build specifically for Circuit Playground Express**. The application imports only `board`, `digitalio`, `pwmio`, `audioio`, `audiocore`, `neopixel`, `math`, and `time`. CPX builds normally include/freeze `neopixel`; if your build does not, install the matching official CircuitPython `neopixel.mpy` library. No driver hardware is required.
+Install the current stable **CircuitPython build specifically for Circuit Playground Express**. The application imports only `board`, `digitalio`, `pwmio`, `audioio`, `audiocore`, `neopixel`, `math`, `random`, and `time`. CPX builds normally include/freeze `neopixel`; if your build does not, install the matching official CircuitPython `neopixel.mpy` library. No driver hardware is required.
 
 Copy `code.py` and the included `audio` directory to CIRCUITPY. All three selected recordings are now included:
 
@@ -124,7 +124,7 @@ Digital audio was attenuated by 6 dB and given 5 ms boundary fades to suppress c
 
 AudioOut uses the DAC, background DMA, and an available timer. Hardware eye PWM uses separate TCC0 and TCC1 channels; servo uses TC4. Constructing the servo before AudioOut prevents the audio allocator from claiming TC4. Digital scene outputs use no timer. NeoPixel writes for ten pixels take approximately 300 µs plus protocol overhead and occur at 25 Hz. These peripheral allocations support concurrency architecturally; hardware playback/dropout testing is still required. Flash I/O and garbage collection can introduce short delays, so this is responsive cooperative control, not a hard-real-time guarantee.
 
-Door closed: contact LOW, servo approaches 40°, eyes fade blue↔purple, both scene LEDs cycle seven RGB combinations together, and all ten pixels run a rainbow/chase/pulse pattern while the drinking WAV loops. Door open: after 35 ms of stable input, current audio stops, RecordScratch plays once and then RadioStatic loops, servo approaches 110°, eyes become red, both scene LEDs become steady red, and pixels alternate red/purple at 2 Hz. Door closed again restores the drinking mode and **restarts the drinking recording from its beginning**, rather than resuming its previous sample offset. Animation and servo updates use monotonic deadlines without waiting for audio completion.
+Door closed: contact LOW, servo approaches 40°, eyes fade blue↔purple, both scene LEDs cycle seven RGB combinations together, and all ten pixels flash random nonblack colors five times per second while the drinking WAV loops. Door open: after 35 ms of stable input, current audio stops, RecordScratch plays once and then RadioStatic loops, servo approaches 110°, eyes become red, both scene LEDs become steady red, and all ten pixels stay solid red. Door closed again restores the drinking mode and **restarts the drinking recording from its beginning**, rather than resuming its previous sample offset. Animation and servo updates use monotonic deadlines without waiting for audio completion.
 
 The servo retains a hardware holding pulse at its target. Travel is about 70° under nominal pulse calibration; adjust the two angle constants with the horn unloaded, then fit the mechanism. Software ramps by at most 2° every 20 ms. At boot, interrupted mode is the safe logical default, with audio starting after the initial debounce interval. An open/broken door wire reads as interrupted.
 
