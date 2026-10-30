@@ -1,0 +1,28 @@
+{
+  "format": "mono signed 16-bit PCM, 16000Hz",
+  "files": [
+    {
+      "file": "drinking.wav",
+      "seconds": 20.0,
+      "frames": 320000,
+      "bytes": 640044,
+      "peak_sample": 16423
+    },
+    {
+      "file": "radio_static.wav",
+      "seconds": 6.501625,
+      "frames": 104026,
+      "bytes": 208096,
+      "peak_sample": 13255
+    },
+    {
+      "file": "record_scratch.wav",
+      "seconds": 0.8576875,
+      "frames": 13723,
+      "bytes": 27490,
+      "peak_sample": 17734
+    }
+  ],
+  "total_audio_bytes": 875630,
+  "hardware_playback_tested": false
+}

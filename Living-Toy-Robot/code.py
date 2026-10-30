@@ -1,7 +1,8 @@
 """Halloween minifridge robot, CPX, revision C.
 
 User-approved change: two parallel scene RGB LEDs supply interruption red; no separate red LEDs.
-Copy recorded PCM WAVs to /audio/drinking.wav and /audio/interrupted.wav.
+Audio: drinking.wav loops; record_scratch.wav plays once, then radio_static.wav loops.
+All three WAV files belong in /audio/ on CIRCUITPY.
 No tones or synthesized-audio fallback. See README for setup and power checks.
 """
 import time
@@ -77,9 +78,15 @@ def wheel(position):
 audio = audioio.AudioOut(board.A0)
 recordings = []                   # references keep stream handles alive
 try:
-    for filename in ('/audio/drinking.wav', '/audio/interrupted.wav'):
+    for filename in ('/audio/drinking.wav', '/audio/record_scratch.wav',
+                     '/audio/radio_static.wav'):
         handle = open(filename, 'rb')
-        recordings.append((handle, audiocore.WaveFile(handle)))
+        try:
+            wav = audiocore.WaveFile(handle)
+        except Exception:
+            handle.close()
+            raise
+        recordings.append((handle, wav))
         wav = recordings[-1][1]
         if (wav.channel_count != 1 or wav.sample_rate != 16000
                 or wav.bits_per_sample != 16):
@@ -105,6 +112,7 @@ raw_open = bool(door.value)
 raw_changed_at = now
 interrupted = True
 initialized = False
+scratch_pending = False
 current_angle = VIEWER_ANGLE
 target_angle = VIEWER_ANGLE
 set_angle(current_angle)
@@ -128,13 +136,23 @@ try:
                 mode_started = now
                 target_angle = VIEWER_ANGLE if interrupted else DRINK_ANGLE
                 audio.stop()         # stop current file immediately on a mode change
-                audio.play(recordings[1 if interrupted else 0][1], loop=True)
+                scratch_pending = interrupted
+                if interrupted:
+                    audio.play(recordings[1][1], loop=False)
+                else:
+                    audio.play(recordings[0][1], loop=True)
                 # Apply external response immediately, independently of frame timer.
                 if interrupted:
                     eye_red.duty_cycle = 65535
                     eye_blue.duty_cycle = 0
                     scene(True, False, False)
                 next_frame = now
+
+        # Start static at scratch completion without a programmed pause. Door
+        # transitions run first, so closing during scratch cancels this handoff.
+        if initialized and interrupted and scratch_pending and not audio.playing:
+            scratch_pending = False
+            audio.play(recordings[2][1], loop=True)
 
         # Hardware PWM holds the last servo position between these small steps.
         if now >= next_servo:

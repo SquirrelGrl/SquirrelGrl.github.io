@@ -1,14 +1,21 @@
-# Drinking-mode audio
+# Robot audio — ready to copy
 
-Source: user-supplied PartyMusic.mp3.
-Selected source interval: 01:57.000 through 02:17.000 (20.000 seconds).
-Output: drinking.wav, mono, 16,000 Hz, signed 16-bit uncompressed PCM, 320,000 frames.
-Processing: -6 dB gain for initial playback headroom; 5 ms fade at each boundary to suppress wraparound clicks. No time stretching or crossfade; the full selected 20 seconds is retained. A rhythmically seamless musical transition is not guaranteed.
+Copy this audio directory (containing the three WAV files) and code.py to CIRCUITPY. Do not copy the entire hardware ZIP or schematic files onto the microcontroller. The three WAV files total **875,630 bytes / 855.1 KiB**; code and filesystem overhead require additional space. Check actual CIRCUITPY free space. An obsolete interrupted.wav, if present, is no longer used and can be removed.
 
-Copy drinking.wav into CIRCUITPY/audio/. Existing code.py already loops this file while the door is closed. On reopening/reclosing the door the recording restarts from this selected section's beginning.
+| File | Source | Output duration | Behavior |
+|---|---|---:|---|
+| drinking.wav | PartyMusic.mp3, 01:57–02:17 | 20.000 s | Loop while door closed |
+| record_scratch.wav | Full RecordScratch.m4a | 0.8576875 s | Play once per door opening |
+| radio_static.wav | Full RadioStatic.mp3 | 6.501625 s | Loop after scratch, until door closes |
 
-This WAV uses approximately 640 KB (625 KiB), not the original 6.7 MB conversion. Check actual CIRCUITPY free space before adding the other track. 2 MB nominal board flash is not the same as available filesystem space.
+MP3/AAC container padding can make the source file's reported duration slightly longer than the decoded audio. Neither new effect has been deliberately cropped. All outputs are mono, uncompressed signed 16-bit PCM at 16,000 Hz. They use -6 dB digital gain, with 5 ms boundary fades and zero-valued first/last samples to suppress clicks. The music keeps the full selected 20 seconds. No time stretching or musical crossfade is applied.
 
-interrupted.wav has not been supplied yet. The current program requires both files; it will stop at startup until a valid mono 16 kHz 16-bit PCM interrupted.wav is added. No dummy sound file has been substituted.
+## Sequence
 
-Audio format, duration, peak sample and zero-valued boundary samples were checked digitally. Actual CPX playback and total speaker/supply current still need bench verification; -6 dB digital gain does not guarantee the 200 mA speaker budget. Begin with the STEMMA volume potentiometer low.
+Door opens after the 35 ms debounce: stop music, play scratch once, then begin looping static as soon as AudioOut reports scratch completion. There is no programmed pause and no blocking wait. CircuitPython scheduling and peripheral restart may introduce a short handoff gap; sample-perfect gapless playback has not been verified on hardware.
+
+Door closes during either scratch or static: stop that sound and restart the drinking loop. If the door opens again, scratch plays again before static. Booting with the door already open also starts with scratch.
+
+The software expects all three files at the exact lowercase paths /audio/drinking.wav, /audio/record_scratch.wav, /audio/radio_static.wav. Missing/incorrect-format files cause a visible setup failure, not a generated tone fallback.
+
+See Audio-validation.json for checked frame counts, size and peak samples. Non-silence, format, unclipped output and boundary samples were checked digitally. Door interruption of both stages was simulated. Actual CPX RAM headroom, playback quality, handoff latency and supply current must still be checked on the board. Begin with the existing STEMMA volume control low; digital attenuation does not itself guarantee the 200 mA speaker budget.

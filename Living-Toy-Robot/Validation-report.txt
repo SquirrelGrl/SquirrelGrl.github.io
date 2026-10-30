@@ -2,7 +2,8 @@ PASS: Exported KiCad netlist matches all 24 expected nets, including ten separat
 PASS: BOM contains only approved modules, four RGB LEDs, ten resistors, door contact and supply lead; no added capacitor, transistor or driver.
 PASS: Two scene branches per color share A3/A4/A5; computed combined worst-case sinks 1.943/1.560/1.177mA are each below 2.5mA.
 PASS: A0-A7 each have exactly the specified function; scene anode is on 3.3V; servo +5V is separate from VOUT.
-PASS: Mocked CircuitPython boot/door bounce/open/reclose: exactly drinking -> interrupted -> drinking WAV transitions, within debounce deadlines.
+PASS: Mocked boot/door bounce/open: drinking loop stops; scratch plays once; static loop starts on scratch completion without a programmed delay; closing during static returns to drinking.
+PASS: Closing during scratch cancels the sequence, restarts drinking immediately after debounce, and never starts static later.
 PASS: During interruption: external scene red only, ten pixels red/purple, eye red; normal animation and drinking pose return after reclose.
 PASS: Servo pulses evolve without waiting for audio; nominal 40/110 degree endpoints and cleanup verified in simulation.
 PASS: All ten pixel slots used; every simulated channel remains <=12/255. No synthetic-tone fallback exists.
@@ -12,8 +13,8 @@ PASS: Unsupported stereo WAV fails visibly before playback; outputs return to qu
 BOUNDARIES:
 Peripheral classes and filesystem WAV streams were mocked for behavior testing. These checks do not test actual audio samples, DMA service, RAM headroom, NeoPixel interrupt timing, or servo electrical behavior.
 No physical CPX, servo, LEDs, supply or PID 3885 was available. LED Vf assumptions, visible brightness, SG90 input threshold, loaded current, supply droop, temperature, audio quality and frame timing require commissioning measurements.
-Included audio/drinking.wav was digitally checked: mono, signed 16-bit PCM, 16000Hz, exactly 320000 frames / 20.000 seconds, with zero-valued first and last samples. Peak magnitude is below 16424 after -6dB gain. Source interval: PartyMusic.mp3 01:57–02:17. interrupted.wav is still required. Neither track has been tested on hardware.
+All three user-supplied WAVs are bundled and digitally validated; actual CPX playback remains untested.
 KiCad ERC report is separate and authoritative for schematic ERC only. There are no manually excluded violations.
 Manufacturer hardware source and official CircuitPython pin/timer/audio source were consulted. Full Microchip datasheet PDF was unavailable; see README reference limitations.
 
-SIMULATED MODE CHANGE TIMES (seconds): [(0.036000000000000025, '/audio/drinking.wav'), (0.35100000000000026, '/audio/interrupted.wav'), (0.8550000000000006, '/audio/drinking.wav')]
+SIMULATED MODE CHANGE TIMES (seconds): [(0.036000000000000025, '/audio/drinking.wav'), (0.35100000000000026, '/audio/record_scratch.wav'), (0.5510000000000004, '/audio/radio_static.wav'), (0.8550000000000006, '/audio/drinking.wav')]
