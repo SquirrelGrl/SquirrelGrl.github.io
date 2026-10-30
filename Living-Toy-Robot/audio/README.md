@@ -12,10 +12,10 @@ MP3/AAC container padding can make the source file's reported duration slightly 
 
 ## Sequence
 
-Door opens after the 35 ms debounce: stop music, play scratch once, then begin looping static as soon as AudioOut reports scratch completion. There is no programmed pause and no blocking wait. CircuitPython scheduling and peripheral restart may introduce a short handoff gap; sample-perfect gapless playback has not been verified on hardware.
+Door opens after the 35 ms debounce: stop music, play scratch once, then begin looping static as soon as AudioOut reports scratch completion. There is no programmed pause and no blocking wait for audio completion. Only one WAV is kept open: the previous file is closed and its memory released before the next file opens. File opening, garbage collection, CircuitPython scheduling and peripheral restart may introduce a short handoff gap; sample-perfect gapless playback has not been verified on hardware.
 
 Door closes during either scratch or static: stop that sound and restart the drinking loop. If the door opens again, scratch plays again before static. Booting with the door already open also starts with scratch.
 
-The software expects all three files at the exact lowercase paths /audio/drinking.wav, /audio/record_scratch.wav, /audio/radio_static.wav. Missing/incorrect-format files cause a visible setup failure, not a generated tone fallback.
+The software expects all three files at the exact lowercase paths /audio/drinking.wav, /audio/record_scratch.wav, /audio/radio_static.wav. Missing/incorrect-format files cause a visible failure when that track is first requested, not a generated tone fallback.
 
 See Audio-validation.json for checked frame counts, size and peak samples. Non-silence, format, unclipped output and boundary samples were checked digitally. Door interruption of both stages was simulated. Actual CPX RAM headroom, playback quality, handoff latency and supply current must still be checked on the board. Begin with the existing STEMMA volume control low; digital attenuation does not itself guarantee the 200 mA speaker budget.

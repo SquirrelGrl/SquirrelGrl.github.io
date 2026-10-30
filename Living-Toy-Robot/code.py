@@ -1,12 +1,6 @@
-"""Halloween minifridge robot, CPX, revision C.
-
-User-approved change: two parallel scene RGB LEDs supply interruption red; no separate red LEDs.
-Audio: drinking.wav loops; record_scratch.wav plays once, then radio_static.wav loops.
-All three WAV files belong in /audio/ on CIRCUITPY.
-No tones or synthesized-audio fallback. See README for setup and power checks.
-"""
+# CPX robot: one streamed WAV at a time; no extra hardware or libraries.
+import gc
 import time
-import math
 import random
 import board
 import digitalio
@@ -15,183 +9,140 @@ import audioio
 import audiocore
 import neopixel
 
-DEBOUNCE_S = 0.035
-FRAME_S = 0.04                    # 25 Hz eye updates / pixel output
-PIXEL_FLASH_S = 0.20             # new random pixel colors five times per second
-SERVO_STEP_S = 0.02
+gc.collect()
+print('Robot starting; free RAM:', gc.mem_free())
+CAP = 12
 DRINK_ANGLE = 40.0
-VIEWER_ANGLE = 110.0              # approximately 70 degrees from drinking pose
-SERVO_MIN_US = 1000              # conservative range; calibrate with horn unloaded
-SERVO_MAX_US = 2000
-PIXEL_CHANNEL_CAP = 12           # raw 0..255 codes; never increase without budgeting
+VIEWER_ANGLE = 110.0
+DEBOUNCE = 0.035
+# Seven nonblack colors; shared by scene and onboard random flashes.
+COLORS = ((1,0,0),(0,1,0),(0,0,1),(1,1,0),(0,1,1),(1,0,1),(1,1,1))
+PATHS = ('/audio/drinking.wav', '/audio/record_scratch.wav', '/audio/radio_static.wav')
 
+def output(pin, value):
+    p = digitalio.DigitalInOut(pin)
+    p.switch_to_output(value=value)
+    return p
 
-def output(pin, initial):
-    io = digitalio.DigitalInOut(pin)
-    io.switch_to_output(value=initial)
-    return io
-
-
-# A0's internal amplifier is muted; the external PID 3885 remains powered.
-# Do not import adafruit_circuitplayground: it claims peripherals used here.
-speaker_enable = output(board.SPEAKER_ENABLE, False)
-status_led = output(board.LED, False)
-scene_red = output(board.A3, True)     # common-anode outputs: HIGH is OFF
-scene_green = output(board.A4, True)
-scene_blue = output(board.A5, True)
+mute = output(board.SPEAKER_ENABLE, False)
+status = output(board.LED, False)
+r = output(board.A3, True)
+g = output(board.A4, True)
+b = output(board.A5, True)
 door = digitalio.DigitalInOut(board.A7)
 door.switch_to_input(pull=digitalio.Pull.UP)
-
-# Distinct timers: A1/PA05 TCC0.1, A2/PA06 TCC1.0, A6/PB09 TC4.1.
-# A3 is digital; A4/A5 have no usable hardware PWM in this CPX configuration.
-eye_red = pwmio.PWMOut(board.A1, frequency=1000, duty_cycle=0)
-eye_blue = pwmio.PWMOut(board.A2, frequency=1000, duty_cycle=0)
-servo_pwm = pwmio.PWMOut(board.A6, frequency=50, duty_cycle=0)
+red = pwmio.PWMOut(board.A1, frequency=1000, duty_cycle=0)
+blue = pwmio.PWMOut(board.A2, frequency=1000, duty_cycle=0)
+servo = pwmio.PWMOut(board.A6, frequency=50, duty_cycle=0)
 pixels = neopixel.NeoPixel(board.NEOPIXEL, 10, brightness=1.0, auto_write=False)
-pixels.fill((0, 0, 0))
+pixels.fill((0,0,0))
 pixels.show()
-
-
-def set_angle(angle):
-    angle = max(0.0, min(180.0, angle))
-    pulse = SERVO_MIN_US + (SERVO_MAX_US - SERVO_MIN_US) * angle / 180.0
-    servo_pwm.duty_cycle = int(pulse * servo_pwm.frequency * 65535 / 1000000)
-
-
-def scene(r, g, b):
-    scene_red.value = not r
-    scene_green.value = not g
-    scene_blue.value = not b
-
-
 audio = audioio.AudioOut(board.A0)
-recordings = []                   # references keep stream handles alive
-try:
-    for filename in ('/audio/drinking.wav', '/audio/record_scratch.wav',
-                     '/audio/radio_static.wav'):
-        handle = open(filename, 'rb')
-        try:
-            wav = audiocore.WaveFile(handle)
-        except Exception:
-            handle.close()
-            raise
-        recordings.append((handle, wav))
-        wav = recordings[-1][1]
-        if (wav.channel_count != 1 or wav.sample_rate != 16000
-                or wav.bits_per_sample != 16):
-            raise ValueError('Need mono 16000Hz signed 16-bit PCM WAV: ' + filename)
-except Exception:
-    # A missing/invalid recording is a visible setup failure, never a tone fallback.
+# Reuse one double buffer. Never keep all three files/WaveFiles open.
+buffer = bytearray(512)
+handle = None
+wav = None
+
+def close_wave():
+    global handle, wav
     audio.stop()
-    servo_pwm.duty_cycle = 0
-    eye_red.duty_cycle = 0
-    eye_blue.duty_cycle = 0
-    scene(False, False, False)
-    pixels.fill((0, 0, 0))
-    pixels.show()
-    for handle, wav in recordings:
+    if wav is not None:
         wav.deinit()
+        wav = None
+    if handle is not None:
         handle.close()
-    raise
+        handle = None
 
-# Contact closed means door shut. At boot, hold the interrupted state until
-# the initial switch reading has been stable for the full debounce interval.
+def play(index):
+    global handle, wav
+    close_wave()
+    gc.collect()
+    handle = open(PATHS[index], 'rb')
+    wav = audiocore.WaveFile(handle, buffer)
+    if wav.channel_count != 1 or wav.sample_rate != 16000 or wav.bits_per_sample != 16:
+        raise ValueError('WAV must be mono 16kHz 16-bit PCM')
+    audio.play(wav, loop=(index != 1))
+
+def scene(color):
+    r.value = not color[0]
+    g.value = not color[1]
+    b.value = not color[2]
+
+def angle(value):
+    servo.duty_cycle = int((1000 + 1000 * value / 180) * 50 * 65535 / 1000000)
+
 now = time.monotonic()
-raw_open = bool(door.value)
-raw_changed_at = now
-interrupted = True
-initialized = False
-scratch_pending = False
-current_angle = VIEWER_ANGLE
-target_angle = VIEWER_ANGLE
-set_angle(current_angle)
-next_frame = now
-next_pixel_flash = now
-next_servo = now
-mode_started = now
-palette = ((1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0),
-           (0, 1, 1), (1, 0, 1), (1, 1, 1))
-
+raw = bool(door.value)
+changed = now
+opened = True
+ready = False
+scratch = False
+position = VIEWER_ANGLE
+target = position
+mode_start = now
+frame_at = now
+servo_at = now
+flash_at = now
 try:
+    angle(position)
+    gc.collect()
+    print('Hardware ready; free RAM:', gc.mem_free())
     while True:
         now = time.monotonic()
         reading = bool(door.value)
-        if reading != raw_open:
-            raw_open = reading
-            raw_changed_at = now
-        if now - raw_changed_at >= DEBOUNCE_S:
-            if not initialized or interrupted != raw_open:
-                interrupted = raw_open
-                initialized = True
-                mode_started = now
-                target_angle = VIEWER_ANGLE if interrupted else DRINK_ANGLE
-                audio.stop()         # stop current file immediately on a mode change
-                scratch_pending = interrupted
-                if interrupted:
-                    audio.play(recordings[1][1], loop=False)
-                else:
-                    audio.play(recordings[0][1], loop=True)
-                # Apply external response immediately, independently of frame timer.
-                if interrupted:
-                    eye_red.duty_cycle = 65535
-                    eye_blue.duty_cycle = 0
-                    scene(True, False, False)
-                next_frame = now
-                next_pixel_flash = now
-
-        # Start static at scratch completion without a programmed pause. Door
-        # transitions run first, so closing during scratch cancels this handoff.
-        if initialized and interrupted and scratch_pending and not audio.playing:
-            scratch_pending = False
-            audio.play(recordings[2][1], loop=True)
-
-        # Hardware PWM holds the last servo position between these small steps.
-        if now >= next_servo:
-            next_servo = now + SERVO_STEP_S
-            delta = target_angle - current_angle
-            current_angle += max(-2.0, min(2.0, delta))
-            set_angle(current_angle)
-
-        if initialized and now >= next_frame:
-            next_frame = now + FRAME_S
-            elapsed = now - mode_started
-            if interrupted:
-                eye_red.duty_cycle = 65535
-                eye_blue.duty_cycle = 0
-                scene(True, False, False)
-                # All ten onboard pixels stay solid red while the door is open.
-                pixels.fill((PIXEL_CHANNEL_CAP, 0, 0))
+        if reading != raw:
+            raw = reading
+            changed = now
+        if now - changed >= DEBOUNCE and (not ready or opened != raw):
+            opened = raw
+            ready = True
+            mode_start = now
+            target = VIEWER_ANGLE if opened else DRINK_ANGLE
+            scratch = opened
+            if opened:
+                red.duty_cycle = 65535
+                blue.duty_cycle = 0
+                scene(COLORS[0])
+                pixels.fill((CAP,0,0))
+                pixels.show()
+            play(1 if opened else 0)
+            frame_at = now
+            flash_at = now
+        if ready and opened and scratch and not audio.playing:
+            scratch = False
+            play(2)
+        if now >= servo_at:
+            servo_at = now + 0.02
+            position += max(-2.0, min(2.0, target - position))
+            angle(position)
+        if ready and now >= frame_at:
+            frame_at = now + 0.04
+            elapsed = now - mode_start
+            if opened:
+                red.duty_cycle = 65535
+                blue.duty_cycle = 0
+                scene(COLORS[0])
+                pixels.fill((CAP,0,0))
             else:
-                fade = (math.sin(elapsed * math.pi / 2.0) + 1.0) / 2.0
-                eye_red.duty_cycle = int(fade * 65535)
-                eye_blue.duty_cycle = 65535
-                # Digital combinations retain independent R/G/B control without
-                # software PWM that could jitter during streaming WAV playback.
-                scene(*palette[int(elapsed / 0.16) % len(palette)])
-                if now >= next_pixel_flash:
-                    next_pixel_flash = now + PIXEL_FLASH_S
+                phase = elapsed % 4
+                red.duty_cycle = int((phase if phase < 2 else 4 - phase) * 32767.5)
+                blue.duty_cycle = 65535
+                scene(COLORS[int(elapsed / 0.16) % 7])
+                if now >= flash_at:
+                    flash_at = now + 0.20
                     for i in range(10):
-                        # Independently choose one of seven nonblack RGB colors.
-                        # Preserve the existing raw-channel current-budget cap.
-                        rgb = palette[random.randrange(len(palette))]
-                        pixels[i] = tuple(channel * PIXEL_CHANNEL_CAP for channel in rgb)
-            pixels.show()            # ten pixels: ~300us data transfer, 25 times/s
-        # Audio DMA and hardware PWM run in the background. No long sleeps or
-        # blocking wait for audio completion; door input is checked every pass.
-except BaseException:
-    audio.stop()
-    servo_pwm.duty_cycle = 0
-    eye_red.duty_cycle = 0
-    eye_blue.duty_cycle = 0
-    scene(False, False, False)
-    pixels.fill((0, 0, 0))
-    pixels.show()
-    raise
+                        c = COLORS[random.randrange(7)]
+                        pixels[i] = (c[0]*CAP, c[1]*CAP, c[2]*CAP)
+            pixels.show()
 finally:
+    close_wave()
+    servo.duty_cycle = 0
+    red.duty_cycle = 0
+    blue.duty_cycle = 0
+    scene((0,0,0))
+    pixels.fill((0,0,0))
+    pixels.show()
     audio.deinit()
-    servo_pwm.deinit()
-    eye_red.deinit()
-    eye_blue.deinit()
-    for handle, wav in recordings:
-        wav.deinit()
-        handle.close()
+    servo.deinit()
+    red.deinit()
+    blue.deinit()

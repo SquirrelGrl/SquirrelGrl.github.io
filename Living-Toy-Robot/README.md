@@ -110,7 +110,11 @@ SG90 clones vary; 1 A is a planning allowance, not a guaranteed maximum. Measure
 
 ## 5. CircuitPython and actual recorded audio
 
-Install the current stable **CircuitPython build specifically for Circuit Playground Express**. The application imports only `board`, `digitalio`, `pwmio`, `audioio`, `audiocore`, `neopixel`, `math`, `random`, and `time`. CPX builds normally include/freeze `neopixel`; if your build does not, install the matching official CircuitPython `neopixel.mpy` library. No driver hardware is required.
+Install the current stable **CircuitPython build specifically for Circuit Playground Express**.
+
+**Running from Thonny:** save the file as `code.py` in the root of CIRCUITPY, click the Shell, then press **Control+D** (or press the board Reset button once). Avoid Run/F5 or `%Run -c $EDITOR_CONTENT` on this RAM-limited board: sending the whole editor text can require extra memory. Close any other serial console first.
+
+The compact application keeps **one WAV file and one WaveFile object open at a time**, closes and releases them before changing tracks, reuses one **512-byte** double buffer, and collects garbage between tracks. It prints free RAM at startup for diagnosis. It no longer preloads three audio objects or imports `math`; eye fading uses a triangle wave. This reduces source size and expected runtime allocation, but actual RAM headroom must be checked on the board. A short track handoff can still occur while opening a new file. The application imports only `board`, `digitalio`, `pwmio`, `audioio`, `audiocore`, `neopixel`, `gc`, `random`, and `time`. CPX builds normally include/freeze `neopixel`; if your build does not, install the matching official CircuitPython `neopixel.mpy` library. No driver hardware is required.
 
 Copy `code.py` and the included `audio` directory to CIRCUITPY. All three selected recordings are now included:
 
@@ -120,7 +124,7 @@ Copy `code.py` and the included `audio` directory to CIRCUITPY. All three select
 
 All files are **mono, uncompressed PCM, 16-bit signed, 16,000 Hz**. The combined WAV size is **875,630 bytes (855.1 KiB)**. They stream from flash rather than loading fully into the CPX's 32 kB RAM. CPX has 2 MB nominal external flash, but actual filesystem capacity/free space depends on firmware and installed files. Check available CIRCUITPY space before copying. Copy only code, needed libraries and the three WAV files; keep schematic/PDF/ZIP files on your computer. `interrupted.wav` is no longer used.
 
-Digital audio was attenuated by 6 dB and given 5 ms boundary fades to suppress clicks. No time stretching or generated-tone substitute is used. Output format, frame counts, non-silence and sample levels were checked digitally. These checks do not establish perceived loudness or safe amplifier current; adjust the existing volume pot and verify the current budget on hardware. Detailed audio notes and exact sizes are in `audio/README.md` and `audio/Audio-validation.json`. All three files are mandatory; missing or invalid files stop the program at startup.
+Digital audio was attenuated by 6 dB and given 5 ms boundary fades to suppress clicks. No time stretching or generated-tone substitute is used. Output format, frame counts, non-silence and sample levels were checked digitally. These checks do not establish perceived loudness or safe amplifier current; adjust the existing volume pot and verify the current budget on hardware. Detailed audio notes and exact sizes are in `audio/README.md` and `audio/Audio-validation.json`. All three files are mandatory; missing or invalid files stop the program when that track is first requested.
 
 AudioOut uses the DAC, background DMA, and an available timer. Hardware eye PWM uses separate TCC0 and TCC1 channels; servo uses TC4. Constructing the servo before AudioOut prevents the audio allocator from claiming TC4. Digital scene outputs use no timer. NeoPixel writes for ten pixels take approximately 300 µs plus protocol overhead and occur at 25 Hz. These peripheral allocations support concurrency architecturally; hardware playback/dropout testing is still required. Flash I/O and garbage collection can introduce short delays, so this is responsive cooperative control, not a hard-real-time guarantee.
 

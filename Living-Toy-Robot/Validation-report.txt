@@ -6,12 +6,13 @@ PASS: Mocked boot/door bounce/open: drinking loop stops; scratch plays once; sta
 PASS: Closing during scratch cancels the sequence, restarts drinking immediately after debounce, and never starts static later.
 PASS: During interruption: external scene red only, all ten pixels solid red, eye red; independent random nonblack pixel colors resume at 0.20s intervals and drinking pose returns after reclose.
 PASS: Servo pulses evolve without waiting for audio; nominal 40/110 degree endpoints and cleanup verified in simulation.
+PASS: At most one WaveFile and file handle remain open; every transition reuses the same 512-byte audio buffer; final cleanup closes all resources.
 PASS: All ten pixel slots used; every simulated channel remains <=12/255. No synthetic-tone fallback exists.
 PASS: Missing recordings fail visibly with audio stopped, lights off and servo pulses disabled.
 PASS: Unsupported stereo WAV fails visibly before playback; outputs return to quiet state.
 
 BOUNDARIES:
-Peripheral classes and filesystem WAV streams were mocked for behavior testing. These checks do not test actual audio samples, DMA service, RAM headroom, NeoPixel interrupt timing, or servo electrical behavior.
+Peripheral classes and filesystem WAV streams were mocked for behavior testing. GC and heap readings are mocked; they do not demonstrate actual free RAM. These checks do not test actual audio samples, DMA service, RAM headroom, NeoPixel interrupt timing, or servo electrical behavior.
 No physical CPX, servo, LEDs, supply or PID 3885 was available. LED Vf assumptions, visible brightness, SG90 input threshold, loaded current, supply droop, temperature, audio quality and frame timing require commissioning measurements.
 All three user-supplied WAVs are bundled and digitally validated; actual CPX playback remains untested.
 KiCad ERC report is separate and authoritative for schematic ERC only. There are no manually excluded violations.
