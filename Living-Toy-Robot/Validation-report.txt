@@ -12,7 +12,7 @@ PASS: Unsupported stereo WAV fails visibly before playback; outputs return to qu
 BOUNDARIES:
 Peripheral classes and filesystem WAV streams were mocked for behavior testing. These checks do not test actual audio samples, DMA service, RAM headroom, NeoPixel interrupt timing, or servo electrical behavior.
 No physical CPX, servo, LEDs, supply or PID 3885 was available. LED Vf assumptions, visible brightness, SG90 input threshold, loaded current, supply droop, temperature, audio quality and frame timing require commissioning measurements.
-User must provide both actual recorded WAV files. No audio assets are bundled or claimed to have been played on hardware.
+Included audio/drinking.wav was digitally checked: mono, signed 16-bit PCM, 16000Hz, exactly 320000 frames / 20.000 seconds, with zero-valued first and last samples. Peak magnitude is below 16424 after -6dB gain. Source interval: PartyMusic.mp3 01:57–02:17. interrupted.wav is still required. Neither track has been tested on hardware.
 KiCad ERC report is separate and authoritative for schematic ERC only. There are no manually excluded violations.
 Manufacturer hardware source and official CircuitPython pin/timer/audio source were consulted. Full Microchip datasheet PDF was unavailable; see README reference limitations.
 
